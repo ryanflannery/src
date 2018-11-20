@@ -1499,6 +1499,13 @@ The index of the next argument to be processed when using
 Assigning 1 to this parameter causes
 .Ic getopts
 to process arguments from the beginning the next time it is invoked.
+.It Ev NANOSECONDS
+The number of nanoseconds spent executing the previously executed command in
+an interactive shell.
+This time is measured by calling
+.Xr clock_gettime 2
+with a monotonic clock, before and after each command execution, and
+measuring the difference.
 .It Ev PATH
 A colon separated list of directories that are searched when looking for
 commands and files sourced using the
@@ -1581,6 +1588,19 @@ Insert a carriage return character.
 The name of the shell.
 .It Li \et
 The current time, in 24-hour HH:MM:SS format.
+.It Li \ex
+The execution time of the previous command, with nanosecond granularity.
+The display will show two units of significance, where the units are (in
+order): minutes (m), seconds (s), milliseconds (ms), microseconds (µs), and
+nanoseconds (ns).
+This time is measured by calling
+.Xr clock_gettime 2
+with a monotonic clock, before and after each command execution, and
+measuring the difference.
+.Pp
+To customize the display of this time, the
+.Ev NANOSECONDS
+parameter can be leveraged.
 .It Li \eT
 The current time, in 12-hour HH:MM:SS format.
 .It Li \e@
