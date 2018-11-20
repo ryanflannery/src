@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "sh.h"
@@ -70,6 +71,8 @@ char	*current_wd;
 int	 current_wd_size;
 
 int	x_cols = 80;
+
+struct timespec	cmd_start_time, cmd_end_time, cmd_exec_time;
 
 /*
  * shell initialization
@@ -630,8 +633,22 @@ shell(Source *volatile s, volatile int toplevel)
 			}
 		}
 
-		if (t && (!Flag(FNOEXEC) || (s->flags & SF_TTY)))
+		if (t && (!Flag(FNOEXEC) || (s->flags & SF_TTY))) {
+			if (clock_gettime(CLOCK_MONOTONIC, &cmd_start_time))
+				internal_errorf("%s: start time", __func__);
+
 			exstat = execute(t, 0, NULL);
+
+			if (clock_gettime(CLOCK_MONOTONIC, &cmd_end_time))
+				internal_errorf("%s: end time", __func__);
+
+			timespecsub(&cmd_end_time, &cmd_start_time,
+					&cmd_exec_time);
+
+			setint(global("NANOSECONDS"),
+					cmd_exec_time.tv_sec * 1000000000 +
+					cmd_exec_time.tv_nsec);
+		}
 
 		if (t != NULL && t->type != TEOF && interactive && really_exit)
 			really_exit = 0;

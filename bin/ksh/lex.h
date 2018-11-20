@@ -117,3 +117,4 @@ void	yyerror(const char *, ...)
 Source * pushs(int, Area *);
 void	set_prompt(int);
 void	pprompt(const char *, int);
+void	expand_execution_time(char *, int);

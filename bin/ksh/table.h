@@ -171,6 +171,7 @@ extern const struct builtin shbuiltins [], kshbuiltins [];
 #define	V_TMPDIR		17
 #define	V_LINENO		18
 #define	V_TERM			19
+#define	V_NANOSECONDS		20
 
 /* values for set_prompt() */
 #define PS1	0		/* command */

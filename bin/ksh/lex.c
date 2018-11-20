@@ -9,6 +9,7 @@
 #include <libgen.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "sh.h"
@@ -101,6 +102,8 @@ char	ident[IDENT+1];
 char   **history;	/* saved commands */
 char   **histptr;	/* last history item */
 uint32_t histsize;	/* history size */
+
+extern struct timespec	cmd_start_time, cmd_end_time, cmd_exec_time;
 
 /* optimized getsc_bn() */
 #define getsc()		(*source->str != '\0' && *source->str != '\\' \
@@ -1373,6 +1376,9 @@ dopprompt(const char *sp, int ntruncate, const char **spp, int doprint)
 				} else
 					strlcpy(strbuf, basename(p), sizeof strbuf);
 				break;
+			case 'x':	/* '\' 'x' execution time */
+				expand_execution_time(strbuf, sizeof strbuf);
+				break;
 			case '!':	/* '\' '!' history line number */
 				snprintf(strbuf, sizeof strbuf, "%d",
 				    source->line + 1);
@@ -1665,4 +1671,25 @@ pop_state_(State_info *si, Lex_state *old_end)
 	afree(old_base, ATEMP);
 
 	return si->base + STATE_BSIZE - 1;
+}
+
+void
+expand_execution_time(char *buf, int bufsz)
+{
+	long	nanos	= cmd_exec_time.tv_nsec % 1000;
+	long	micros	= cmd_exec_time.tv_nsec / 1000 % 1000;
+	long	millis	= cmd_exec_time.tv_nsec / 1000000;
+	time_t	seconds	= cmd_exec_time.tv_sec % 60;
+	time_t	minutes	= cmd_exec_time.tv_sec / 60;
+
+	if (minutes > 0)
+		snprintf(buf, bufsz, "%llum %llus", minutes, seconds);
+	else if (seconds > 0)
+		snprintf(buf, bufsz, "%llus %ldms", seconds, millis);
+	else if (millis > 0)
+		snprintf(buf, bufsz, "%ldms %ldµs", millis, micros);
+	else if (micros > 0)
+		snprintf(buf, bufsz, "%ldµs %ldns", micros, nanos);
+	else
+		snprintf(buf, bufsz, "%ldns", nanos);
 }
