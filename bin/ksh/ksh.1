@@ -1589,15 +1589,14 @@ The name of the shell.
 .It Li \et
 The current time, in 24-hour HH:MM:SS format.
 .It Li \ex
-The execution time of the previous command, with nanosecond granularity.
-The display will show two units of significance, where the units are (in
-order): minutes (m), seconds (s), milliseconds (ms), microseconds (µs), and
-nanoseconds (ns).
+The execution time of the previously executed command.
 This time is measured by calling
 .Xr clock_gettime 2
 with a monotonic clock, before and after each command execution, and
 measuring the difference.
-.Pp
+The two most significant units in that measurement will be displayed, where the
+units are, in decreasing order of significance: minutes (m), seconds(s),
+milliseconds (ms), microseconds (µs), and nanoseconds (ns).
 To customize the display of this time, the
 .Ev NANOSECONDS
 parameter can be leveraged.
