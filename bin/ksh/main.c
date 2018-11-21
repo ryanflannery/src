@@ -5,6 +5,7 @@
  */
 
 #include <sys/stat.h>
+#include <sys/time.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -170,6 +171,11 @@ main(int argc, char *argv[])
 	ainit(&env.area);
 	genv = &env;
 	newblock();		/* set up global l->vars and l->funs */
+
+	/* initialize command execution timers to all zero */
+	timespecclear(&cmd_start_time);
+	timespecclear(&cmd_end_time);
+	timespecclear(&cmd_exec_time);
 
 	/* Do this first so output routines (eg, errorf, shellf) can work */
 	initio();
@@ -634,20 +640,25 @@ shell(Source *volatile s, volatile int toplevel)
 		}
 
 		if (t && (!Flag(FNOEXEC) || (s->flags & SF_TTY))) {
-			if (clock_gettime(CLOCK_MONOTONIC, &cmd_start_time))
-				internal_errorf("%s: start time", __func__);
+			if (interactive)
+				clock_gettime(CLOCK_MONOTONIC, &cmd_start_time);
 
 			exstat = execute(t, 0, NULL);
 
-			if (clock_gettime(CLOCK_MONOTONIC, &cmd_end_time))
-				internal_errorf("%s: end time", __func__);
-
-			timespecsub(&cmd_end_time, &cmd_start_time,
-					&cmd_exec_time);
-
-			setint(global("NANOSECONDS"),
-					cmd_exec_time.tv_sec * 1000000000 +
-					cmd_exec_time.tv_nsec);
+			if (interactive) {
+				/*
+				 * Calculate the time spent executing the
+				 * command and updat ehte NANOSECONDS parameter
+				 * accordingly. Note rollover could happen if
+				 * the command took > 292 years to execute.
+				 */
+				clock_gettime(CLOCK_MONOTONIC, &cmd_end_time);
+				timespecsub(&cmd_end_time, &cmd_start_time,
+				            &cmd_exec_time);
+				setint(global("NANOSECONDS"),
+				       cmd_exec_time.tv_sec * 1e10
+				     + cmd_exec_time.tv_nsec);
+			}
 		}
 
 		if (t != NULL && t->type != TEOF && interactive && really_exit)
