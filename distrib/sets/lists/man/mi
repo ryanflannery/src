@@ -1652,6 +1652,7 @@
 ./usr/share/man/man4/pty.4
 ./usr/share/man/man4/puc.4
 ./usr/share/man/man4/pvbus.4
+./usr/share/man/man4/pvclock.4
 ./usr/share/man/man4/pwdog.4
 ./usr/share/man/man4/qla.4
 ./usr/share/man/man4/qle.4
@@ -2048,7 +2049,6 @@
 ./usr/share/man/man5/login.conf.5
 ./usr/share/man/man5/magic.5
 ./usr/share/man/man5/mailer.conf.5
-./usr/share/man/man5/malloc.conf.5
 ./usr/share/man/man5/man.conf.5
 ./usr/share/man/man5/mandoc.db.5
 ./usr/share/man/man5/mixerctl.conf.5

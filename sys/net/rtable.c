@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.65 2018/11/19 10:15:04 claudio Exp $ */
+/*	$OpenBSD: rtable.c,v 1.67 2018/11/23 16:24:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -614,6 +614,8 @@ rtable_delete(unsigned int rtableid, struct sockaddr *dst,
 
 	addr = satoaddr(ar, dst);
 	plen = rtable_satoplen(dst->sa_family, mask);
+	if (plen == -1)
+		return (EINVAL);
 
 	rtref(rt); /* guarantee rtfree won't do anything under ar_lock */
 	rw_enter_write(&ar->ar_lock);
@@ -729,13 +731,12 @@ rtable_mpath_capable(unsigned int rtableid, sa_family_t af)
 
 int
 rtable_mpath_reprio(unsigned int rtableid, struct sockaddr *dst,
-    struct sockaddr *mask, uint8_t prio, struct rtentry *rt)
+    int plen, uint8_t prio, struct rtentry *rt)
 {
 	struct art_root			*ar;
 	struct art_node			*an;
 	struct srp_ref			 sr;
 	uint8_t				*addr;
-	int				 plen;
 	int				 error = 0;
 
 	ar = rtable_get(rtableid, dst->sa_family);
@@ -743,7 +744,6 @@ rtable_mpath_reprio(unsigned int rtableid, struct sockaddr *dst,
 		return (EAFNOSUPPORT);
 
 	addr = satoaddr(ar, dst);
-	plen = rtable_satoplen(dst->sa_family, mask);
 
 	rw_enter_write(&ar->ar_lock);
 	an = art_lookup(ar, addr, plen, &sr);
@@ -884,60 +884,49 @@ rtable_satoplen(sa_family_t af, struct sockaddr *mask)
 	if (ap > ep)
 		return (-1);
 
+	/* Trim trailing zeroes. */
+	while (ep[-1] == 0 && ap < ep)
+		ep--;
+
 	if (ap == ep)
 		return (0);
 
 	/* "Beauty" adapted from sbin/route/show.c ... */
 	while (ap < ep) {
-		switch (*ap) {
+		switch (*ap++) {
 		case 0xff:
 			plen += 8;
-			ap++;
 			break;
 		case 0xfe:
 			plen += 7;
-			ap++;
 			goto out;
 		case 0xfc:
 			plen += 6;
-			ap++;
 			goto out;
 		case 0xf8:
 			plen += 5;
-			ap++;
 			goto out;
 		case 0xf0:
 			plen += 4;
-			ap++;
 			goto out;
 		case 0xe0:
 			plen += 3;
-			ap++;
 			goto out;
 		case 0xc0:
 			plen += 2;
-			ap++;
 			goto out;
 		case 0x80:
 			plen += 1;
-			ap++;
-			goto out;
-		case 0x00:
 			goto out;
 		default:
 			/* Non contiguous mask. */
 			return (-1);
 		}
-
 	}
 
 out:
-#ifdef DIAGNOSTIC
-	for (; ap < ep; ap++) {
-		if (*ap != 0x00)
-			return (-1);
-	}
-#endif /* DIAGNOSTIC */
+	if (plen > dp->dom_maxplen || ap != ep)
+		return -1;
 
 	return (plen);
 }
