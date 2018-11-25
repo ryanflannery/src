@@ -656,7 +656,7 @@ shell(Source *volatile s, volatile int toplevel)
 				timespecsub(&cmd_end_time, &cmd_start_time,
 				            &cmd_exec_time);
 				setint(global("NANOSECONDS"),
-				       cmd_exec_time.tv_sec * 1e10
+				       cmd_exec_time.tv_sec * 1e9
 				     + cmd_exec_time.tv_nsec);
 			}
 		}
