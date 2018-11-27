@@ -171,11 +171,6 @@ main(int argc, char *argv[])
 	genv = &env;
 	newblock();		/* set up global l->vars and l->funs */
 
-	/* initialize command execution timers to all zero */
-	timespecclear(&cmd_start_time);
-	timespecclear(&cmd_end_time);
-	timespecclear(&cmd_exec_time);
-
 	/* Do this first so output routines (eg, errorf, shellf) can work */
 	initio();
 
@@ -556,8 +551,16 @@ shell(Source *volatile s, volatile int toplevel)
 	int i;
 
 	newenv(E_PARSE);
-	if (interactive)
+	if (interactive) {
 		really_exit = 0;
+
+		/* Initialize command execution timers to all zero */
+		timespecclear(&cmd_start_time);
+		timespecclear(&cmd_end_time);
+		timespecclear(&cmd_exec_time);
+		setint(global("NANOSECONDS"), 0);
+	}
+
 	i = sigsetjmp(genv->jbuf, 0);
 	if (i) {
 		switch (i) {
