@@ -1210,7 +1210,7 @@ set_prompt(int to)
 static int
 dopprompt(const char *sp, int ntruncate, const char **spp, int doprint)
 {
-	char strbuf[1024], tmpbuf[1024], *p, *str, nbuf[32], delimiter = '\0';
+	char leftbuf[1024], rightbuf[1024], tmpbuf[1024], *p, *str, *strbuf, nbuf[32], delimiter = '\0';
 	int len, c, n, totlen = 0, indelimit = 0, counting = 1, delimitthis;
 	const char *cp = sp;
 	struct tm *tm;
@@ -1220,6 +1220,8 @@ dopprompt(const char *sp, int ntruncate, const char **spp, int doprint)
 		delimiter = *cp;
 		cp += 2;
 	}
+
+	strbuf = leftbuf;
 
 	while (*cp != 0) {
 		delimitthis = 0;
@@ -1411,6 +1413,12 @@ dopprompt(const char *sp, int ntruncate, const char **spp, int doprint)
 			case ']': /* '\' ']' restart counting */
 				strbuf[0] = '\0';
 				counting = 1;
+				break;
+			case '<': /* '\' '<' begin left alignment */
+				strbuf = leftbuf;
+				break;
+			case '>': /* '\' '>' begin right alignment */
+				strbuf = rightbuf;
 				break;
 
 			default:
