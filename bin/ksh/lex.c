@@ -1221,6 +1221,7 @@ dopprompt(const char *sp, int ntruncate, const char **spp, int doprint)
 		cp += 2;
 	}
 
+	bzero(rightbuf, sizeof rightbuf);
 	strbuf = leftbuf;
 
 	while (*cp != 0) {
@@ -1414,9 +1415,6 @@ dopprompt(const char *sp, int ntruncate, const char **spp, int doprint)
 				strbuf[0] = '\0';
 				counting = 1;
 				break;
-			case '<': /* '\' '<' begin left alignment */
-				strbuf = leftbuf;
-				break;
 			case '>': /* '\' '>' begin right alignment */
 				strbuf = rightbuf;
 				break;
@@ -1427,7 +1425,7 @@ dopprompt(const char *sp, int ntruncate, const char **spp, int doprint)
 			}
 			cp++;
 
-			str = strbuf;
+			str = leftbuf;
 			len = strlen(str);
 			if (ntruncate) {
 				if (ntruncate >= len) {
@@ -1439,7 +1437,9 @@ dopprompt(const char *sp, int ntruncate, const char **spp, int doprint)
 				ntruncate = 0;
 			}
 			if (doprint)
-				shf_write(str, len, shl_out);
+				printf("left buf: '%s'\n", leftbuf);
+				printf("rigt buf: '%s'\n", rightbuf);
+				shf_fprintf(shl_out, "%*s\r%s", 109, rightbuf, leftbuf);
 			if (counting && !indelimit && !delimitthis)
 				totlen += len;
 			continue;
